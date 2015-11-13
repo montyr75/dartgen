@@ -11,16 +11,17 @@ ArgResults argResults;
 void main(List<String> arguments) {
   // set up argument parser
   final ArgParser argParser = new ArgParser()
-    ..addOption('output', abbr: 'o', defaultsTo: ELEMENT)
-    ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME)
+    ..addOption('output', abbr: 'o', defaultsTo: ELEMENT, help: "Type of boilerplate to generate.")
+    ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME, help: "Name of element, class, etc.")
     ..addFlag('help', abbr: 'h', negatable: false, help: "Displays this help information.");
 
   // parse the command-line arguments
   argResults = argParser.parse(arguments);
 
   if (argResults['help']) {
-    print("""
-** HELP **
+    stdout.writeln("""
+
+** dartgen help **
 ${argParser.usage}
     """);
   }
@@ -33,7 +34,7 @@ ${argParser.usage}
 }
 
 void error(String errorMsg) {
-  stdout.writeln(errorMsg);
+  stderr.writeln(errorMsg);
   exitCode = 2;
 }
 
