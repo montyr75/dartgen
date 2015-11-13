@@ -18,6 +18,3 @@ Currently only supports custom Polymer element boilerplate. Creates a directory 
 
     dartgen -h
     
-    
-##A Note About Paths
-When you globally activate a package using any of the `pub global activate` options, Pub creates a shell script in the **bin** directory in your [pub cache](https://www.dartlang.org/tools/pub/glossary.html#system-cache).
