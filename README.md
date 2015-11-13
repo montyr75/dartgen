@@ -2,7 +2,7 @@
 A command-line application to generate Dart code files.
 
 ##Install
-Use the pub global command to install this into your system.
+Use the [pub global](https://www.dartlang.org/tools/pub/cmd/pub-global.html) command to install this into your system. You must already have the [Dart SDK](https://www.dartlang.org/downloads/) downloaded and included in your system path.
 
     pub global activate --source git https://github.com/montyr75/dartgen/
 
