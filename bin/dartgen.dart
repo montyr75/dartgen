@@ -10,16 +10,25 @@ ArgResults argResults;
 
 void main(List<String> arguments) {
   // set up argument parser
-  final ArgParser parser = new ArgParser()
+  final ArgParser argParser = new ArgParser()
     ..addOption('output', abbr: 'o', defaultsTo: ELEMENT)
-    ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME);
+    ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME)
+    ..addFlag('help', abbr: 'h', negatable: false, help: "Displays this help information.");
 
   // parse the command-line arguments
-  argResults = parser.parse(arguments);
+  argResults = argParser.parse(arguments);
 
-  switch (argResults['output']) {
-    case ELEMENT: generateElement(argResults['name']); break;
-    default: error("Unrecognized output type: ${argResults['o']}"); break;
+  if (argResults['help']) {
+    print("""
+** HELP **
+${argParser.usage}
+    """);
+  }
+  else {
+    switch (argResults['output']) {
+      case ELEMENT: generateElement(argResults['name']); break;
+      default: error("Unrecognized output type: ${argResults['o']}"); break;
+    }
   }
 }
 

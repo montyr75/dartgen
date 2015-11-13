@@ -10,3 +10,8 @@ Use the pub global command to install this into your system.
 Currently only supports custom Polymer element boilerplate. Creates a directory and inserts HTML and Dart files.
 
     dartgen -n my-custom-element
+
+##Help
+
+    dartgen -h
+    
