@@ -1,5 +1,9 @@
 name: dartgen
 version: 0.0.1
 description: A command-line application to generate Dart code files.
+
 dependencies:
   args: any
+
+executables:
+  dartgen:
