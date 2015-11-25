@@ -56,7 +56,7 @@ void generateElement(String elementName) {
   </template>
 </dom-module>""");
 
-  dartFileBuffer.write("""@HtmlImport('$filename')
+  dartFileBuffer.write("""@HtmlImport('$filename.html')
 library my_project.lib.$filename;
 
 import 'dart:html';
