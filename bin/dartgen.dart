@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 
 // output types
-const String ELEMENT = "el";      // default output type
+const String ANGULAR_COMPONENT = "ng-cp";      // default output type
+const String POLYMER_ELEMENT = "p-el";
 
 const String DEFAULT_ELEMENT_NAME = "custom-element";
 
@@ -11,7 +12,7 @@ ArgResults argResults;
 void main(List<String> arguments) {
   // set up argument parser
   final ArgParser argParser = new ArgParser()
-    ..addOption('output', abbr: 'o', defaultsTo: ELEMENT, help: "Type of boilerplate to generate.")
+    ..addOption('output', abbr: 'o', defaultsTo: ANGULAR_COMPONENT, help: "Type of boilerplate to generate.")
     ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME, help: "Name of element, class, etc.")
     ..addFlag('help', abbr: 'h', negatable: false, help: "Displays this help information.");
 
@@ -27,7 +28,8 @@ ${argParser.usage}
   }
   else {
     switch (argResults['output']) {
-      case ELEMENT: generateElement(argResults['name']); break;
+      case ANGULAR_COMPONENT: generateAngularComponent(argResults['name']); break;
+      case POLYMER_ELEMENT: generatePolymerElement(argResults['name']); break;
       default: error("Unrecognized output type: ${argResults['o']}"); break;
     }
   }
@@ -38,7 +40,42 @@ void error(String errorMsg) {
   exitCode = 2;
 }
 
-void generateElement(String elementName) {
+void generateAngularComponent(String elementName) {
+  StringBuffer htmlFileBuffer = new StringBuffer();
+  StringBuffer dartFileBuffer = new StringBuffer();
+
+  String filename = elementName.replaceAll("-", "_");
+  String className = elementName.split("-").map((String word) => "${word[0].toUpperCase()}${word.substring(1)}").join();
+
+  htmlFileBuffer.write("""<style>
+
+</style>
+""");
+
+  dartFileBuffer.write("""import 'package:angular2/angular2.dart';
+import 'package:logging/logging.dart';
+import 'package:polymer_elements/iron_flex_layout/classes/iron_flex_layout.dart';
+
+import '../../services/logger.dart';
+
+@Component(selector: '$elementName',
+    encapsulation: ViewEncapsulation.Native,
+    templateUrl: '$filename.html',
+    directives: const [],
+    providers: const []
+)
+class $className {
+  final Logger _log;
+
+  $className(Logger this._log) {
+    _log.info("\$runtimeType()");
+  }
+}""");
+
+  outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer);
+}
+
+void generatePolymerElement(String elementName) {
   StringBuffer htmlFileBuffer = new StringBuffer();
   StringBuffer dartFileBuffer = new StringBuffer();
 
@@ -77,6 +114,10 @@ class $className extends PolymerElement {
   }
 }""");
 
+  outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer);
+}
+
+void outputDirectoryDartHTML(String filename, StringBuffer htmlFileBuffer, StringBuffer dartFileBuffer) {
   String htmlFilename = "$filename.html";
   String dartFilename = "$filename.dart";
 
