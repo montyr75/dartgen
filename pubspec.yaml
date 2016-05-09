@@ -4,6 +4,7 @@ description: A command-line application to generate Dart code files.
 
 dependencies:
   args: any
+  dogma_codegen: 0.0.2
 
 executables:
   dartgen:

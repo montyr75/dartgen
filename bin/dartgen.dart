@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:args/args.dart';
+import 'package:dogma_codegen/identifier.dart';
 
 // output types
-const String ANGULAR_COMPONENT = "ng-cp";      // default output type
+const String ANGULAR_COMPONENT = "ng2-cmp";      // default output type
+const String ANGULAR_DIRECTIVE = "ng2-dir";
+const String ANGULAR_PIPE = "ng2-pipe";
 const String POLYMER_ELEMENT = "p-el";
 
 const String DEFAULT_ELEMENT_NAME = "custom-element";
@@ -12,7 +15,7 @@ ArgResults argResults;
 void main(List<String> arguments) {
   // set up argument parser
   final ArgParser argParser = new ArgParser()
-    ..addOption('output', abbr: 'o', defaultsTo: ANGULAR_COMPONENT, help: "Type of boilerplate to generate.")
+    ..addOption('output', abbr: 'o', defaultsTo: ANGULAR_COMPONENT, help: "Type of boilerplate to generate and output.")
     ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME, help: "Name of element, class, etc.")
     ..addFlag('help', abbr: 'h', negatable: false, help: "Displays this help information.");
 
@@ -29,6 +32,8 @@ ${argParser.usage}
   else {
     switch (argResults['output']) {
       case ANGULAR_COMPONENT: generateAngularComponent(argResults['name']); break;
+      case ANGULAR_DIRECTIVE: generateAngularDirective(argResults['name']); break;
+      case ANGULAR_PIPE: generateAngularPipe(argResults['name']); break;
       case POLYMER_ELEMENT: generatePolymerElement(argResults['name']); break;
       default: error("Unrecognized output type: ${argResults['o']}"); break;
     }
@@ -41,11 +46,16 @@ void error(String errorMsg) {
 }
 
 void generateAngularComponent(String elementName) {
+  if (!isSpinalCase(elementName)) {
+    error("Error: Component names should be provided using spinal case (dash separators).");
+    return;
+  }
+
   StringBuffer htmlFileBuffer = new StringBuffer();
   StringBuffer dartFileBuffer = new StringBuffer();
 
-  String filename = elementName.replaceAll("-", "_");
-  String className = elementName.split("-").map((String word) => "${word[0].toUpperCase()}${word.substring(1)}").join();
+  String filename = spinalToSnakeCase(elementName);
+  String className = spinalToPascalCase(elementName);
 
   htmlFileBuffer.write("""<style>
 
@@ -75,12 +85,61 @@ class $className {
   outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer);
 }
 
+void generateAngularDirective(String className) {
+  if (!isPascalCase(className)) {
+    error("Error: Directive class names should be provided using Pascal case (upper camel case).");
+    return;
+  }
+
+  StringBuffer dartFileBuffer = new StringBuffer();
+
+  String filename = pascalToSnakeCase(className);
+  String elementName = snakeToSpinalCase(filename);
+
+  dartFileBuffer.write("""import 'package:angular2/core.dart';
+
+@Directive(selector: '$elementName')
+class $className {
+
+}""");
+
+  outputFile(filename, "dart", dartFileBuffer);
+}
+
+void generateAngularPipe(String pipeName) {
+  if (!isCamelCase(pipeName)) {
+    error("Error: Pipe names should be provided using camel case.");
+    return;
+  }
+
+  StringBuffer dartFileBuffer = new StringBuffer();
+
+  String filename = camelToSnakeCase(pipeName);
+  String className = camelToPascalCase(filename);
+
+  dartFileBuffer.write("""import 'package:angular2/core.dart';
+
+@Pipe(name: '$pipeName')
+class $className implements PipeTransform {
+  @override String transform(val, [List args]) {
+    return "";
+  }
+}""");
+
+  outputFile(filename, "dart", dartFileBuffer);
+}
+
 void generatePolymerElement(String elementName) {
+  if (!isSpinalCase(elementName)) {
+    error("Error: Element names should be provided using spinal case (dash separators).");
+    return;
+  }
+
   StringBuffer htmlFileBuffer = new StringBuffer();
   StringBuffer dartFileBuffer = new StringBuffer();
 
-  String filename = elementName.replaceAll("-", "_");
-  String className = elementName.split("-").map((String word) => "${word[0].toUpperCase()}${word.substring(1)}").join();
+  String filename = spinalToSnakeCase(elementName);
+  String className = spinalToPascalCase(elementName);
 
   htmlFileBuffer.write("""<dom-module id="$elementName">
   <template>
@@ -118,20 +177,18 @@ class $className extends PolymerElement {
 }
 
 void outputDirectoryDartHTML(String filename, StringBuffer htmlFileBuffer, StringBuffer dartFileBuffer) {
-  String htmlFilename = "$filename.html";
-  String dartFilename = "$filename.dart";
-
   new Directory("$filename").create().then((Directory directory) {
-    new File("${filename}/$htmlFilename").writeAsString(htmlFileBuffer.toString())
-        .then((_) => stdout.writeln("$htmlFilename created."))
-        .catchError(() {
-      error("Error writing HTML file.");
-    });
+    outputFile(filename, "html", htmlFileBuffer, inDir: filename);
+    outputFile(filename, "dart", dartFileBuffer, inDir: filename);
+  });
+}
 
-    new File("${filename}/$dartFilename").writeAsString(dartFileBuffer.toString())
-        .then((_) => stdout.writeln("$dartFilename created."))
-        .catchError(() {
-      error("Error writing Dart file.");
-    });
+void outputFile(String filename, String extension, StringBuffer content, {String inDir}) {
+  String filePath = "${inDir != null ? '$inDir/' : ''}$filename.$extension";
+
+  new File("$filePath").writeAsString(content.toString())
+      .then((_) => stdout.writeln("$filePath created."))
+      .catchError(() {
+    error("Error writing .$extension file.");
   });
 }
