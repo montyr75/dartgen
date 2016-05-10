@@ -96,12 +96,13 @@ void generateAngularDirective(String className) {
   String filename = pascalToSnakeCase(className);
   String elementName = snakeToSpinalCase(filename);
 
+  // NOTE: Use replaceAll() to insert core.dart to avoid transformer errros
   dartFileBuffer.write("""import 'package:angular2/angular2.dart';
 
 @Directive(selector: '$elementName')
 class $className {
 
-}""");
+}""".replaceAll('angular2.dart', 'core.dart'));
 
   outputFile(filename, "dart", dartFileBuffer);
 }
@@ -117,6 +118,7 @@ void generateAngularPipe(String pipeName) {
   String filename = camelToSnakeCase(pipeName);
   String className = camelToPascalCase(filename);
 
+  // NOTE: Use replaceAll() to insert core.dart to avoid transformer errros
   dartFileBuffer.write("""import 'package:angular2/angular2.dart';
 
 @Pipe(name: '$pipeName')
@@ -124,7 +126,7 @@ class $className implements PipeTransform {
   @override String transform(val, [List args]) {
     return "";
   }
-}""");
+}""".replaceAll('angular2.dart', 'core.dart'));
 
   outputFile(filename, "dart", dartFileBuffer);
 }
