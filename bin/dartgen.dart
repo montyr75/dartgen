@@ -66,8 +66,6 @@ void generateAngularComponent(String elementName) {
 import 'package:logging/logging.dart';
 import 'package:polymer_elements/iron_flex_layout/classes/iron_flex_layout.dart';
 
-import '../../services/logger.dart';
-
 @Component(selector: '$elementName',
     encapsulation: ViewEncapsulation.Native,
     templateUrl: '$filename.html',
