@@ -67,7 +67,6 @@ void generateAngularComponent(String elementName) {
 import '../../services/logger_service.dart';
 
 @Component(selector: '$elementName',
-    encapsulation: ViewEncapsulation.Native,
     templateUrl: '$filename.html',
     directives: const [],
     providers: const []
