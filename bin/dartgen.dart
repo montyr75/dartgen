@@ -63,8 +63,8 @@ void generateAngularComponent(String elementName) {
 """);
 
   dartFileBuffer.write("""import 'package:angular2/angular2.dart';
-import 'package:logging/logging.dart';
-import 'package:polymer_elements/iron_flex_layout/classes/iron_flex_layout.dart';
+
+import '../../services/logger_service.dart';
 
 @Component(selector: '$elementName',
     encapsulation: ViewEncapsulation.Native,
@@ -73,9 +73,9 @@ import 'package:polymer_elements/iron_flex_layout/classes/iron_flex_layout.dart'
     providers: const []
 )
 class $className {
-  final Logger _log;
+  final LoggerService _log;
 
-  $className(Logger this._log) {
+  $className(LoggerService this._log) {
     _log.info("\$runtimeType()");
   }
 }""");
@@ -121,7 +121,7 @@ void generateAngularPipe(String pipeName) {
 
 @Pipe(name: '$pipeName')
 class $className implements PipeTransform {
-  @override String transform(val, [List args]) {
+  String transform(val, [List args]) {
     return "";
   }
 }""".replaceAll('angular2.dart', 'core.dart'));
