@@ -62,7 +62,7 @@ void generateAngularComponent(String elementName) {
 </style>
 """);
 
-  dartFileBuffer.write("""import 'package:angular2/angular2.dart';
+  dartFileBuffer.write("""import 'package:angular/angular.dart';
 
 import '../../services/logger_service.dart';
 
