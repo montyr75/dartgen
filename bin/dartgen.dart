@@ -56,10 +56,7 @@ void generateAngularComponent(String elementName) {
   String filename = spinalToSnakeCase(elementName);
   String className = spinalToPascalCase(elementName);
 
-  htmlFileBuffer.write("""<style>
-
-</style>
-""");
+  htmlFileBuffer.write("""<div></div>""");
 
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
