@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:dogma_codegen/identifier.dart';
+import 'package:dartgen/src/identifier.dart';
 
 // output types
 const String ANGULAR_COMPONENT = "ng2-cmp";      // default output type
@@ -51,6 +51,7 @@ void generateAngularComponent(String elementName) {
 
   StringBuffer htmlFileBuffer = new StringBuffer();
   StringBuffer dartFileBuffer = new StringBuffer();
+  StringBuffer cssFileBuffer = new StringBuffer();
 
   String filename = spinalToSnakeCase(elementName);
   String className = spinalToPascalCase(elementName);
@@ -62,22 +63,26 @@ void generateAngularComponent(String elementName) {
 
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
-import '../../services/logger_service.dart';
+import 'package:client_shared/managers.dart';
 
 @Component(selector: '$elementName',
     templateUrl: '$filename.html',
-    directives: const [],
-    providers: const []
+    styleUrls: ['$filename.css'],
+    directives: []
 )
 class $className {
-  final LoggerService _log;
+  final LoggerManager _log;
 
-  $className(LoggerService this._log) {
+  $className(this._log) {
     _log.info("\$runtimeType()");
   }
 }""");
 
-  outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer);
+  cssFileBuffer.write(""":host {
+  
+}""");
+
+  outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer, cssFileBuffer);
 }
 
 void generateAngularDirective(String className) {
@@ -91,13 +96,12 @@ void generateAngularDirective(String className) {
   String filename = pascalToSnakeCase(className);
   String elementName = snakeToSpinalCase(filename);
 
-  // NOTE: Use replaceAll() to insert core.dart to avoid transformer errros
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
 @Directive(selector: '$elementName')
 class $className {
 
-}""".replaceAll('angular2.dart', 'core.dart'));
+}""");
 
   outputFile(filename, "dart", dartFileBuffer);
 }
@@ -113,7 +117,6 @@ void generateAngularPipe(String pipeName) {
   String filename = camelToSnakeCase(pipeName);
   String className = camelToPascalCase(filename);
 
-  // NOTE: Use replaceAll() to insert core.dart to avoid transformer errros
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
 @Pipe(name: '$pipeName')
@@ -121,15 +124,16 @@ class $className implements PipeTransform {
   String transform(val, [List args]) {
     return "";
   }
-}""".replaceAll('angular2.dart', 'core.dart'));
+}""");
 
   outputFile(filename, "dart", dartFileBuffer);
 }
 
-void outputDirectoryDartHTML(String filename, StringBuffer htmlFileBuffer, StringBuffer dartFileBuffer) {
+void outputDirectoryDartHTML(String filename, StringBuffer htmlFileBuffer, StringBuffer dartFileBuffer, StringBuffer cssFileBuffer) {
   new Directory("$filename").create().then((Directory directory) {
     outputFile(filename, "html", htmlFileBuffer, inDir: filename);
     outputFile(filename, "dart", dartFileBuffer, inDir: filename);
+    outputFile(filename, "css", cssFileBuffer, inDir: filename);
   });
 }
 
