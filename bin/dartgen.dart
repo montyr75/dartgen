@@ -6,7 +6,6 @@ import 'package:dogma_codegen/identifier.dart';
 const String ANGULAR_COMPONENT = "ng2-cmp";      // default output type
 const String ANGULAR_DIRECTIVE = "ng2-dir";
 const String ANGULAR_PIPE = "ng2-pipe";
-const String POLYMER_ELEMENT = "p-el";
 
 const String DEFAULT_ELEMENT_NAME = "custom-element";
 
@@ -34,7 +33,6 @@ ${argParser.usage}
       case ANGULAR_COMPONENT: generateAngularComponent(argResults['name']); break;
       case ANGULAR_DIRECTIVE: generateAngularDirective(argResults['name']); break;
       case ANGULAR_PIPE: generateAngularPipe(argResults['name']); break;
-      case POLYMER_ELEMENT: generatePolymerElement(argResults['name']); break;
       default: error("Unrecognized output type: ${argResults['o']}"); break;
     }
   }
@@ -62,7 +60,7 @@ void generateAngularComponent(String elementName) {
 </style>
 """);
 
-  dartFileBuffer.write("""import 'package:angular2/angular2.dart';
+  dartFileBuffer.write("""import 'package:angular/angular.dart';
 
 import '../../services/logger_service.dart';
 
@@ -94,7 +92,7 @@ void generateAngularDirective(String className) {
   String elementName = snakeToSpinalCase(filename);
 
   // NOTE: Use replaceAll() to insert core.dart to avoid transformer errros
-  dartFileBuffer.write("""import 'package:angular2/angular2.dart';
+  dartFileBuffer.write("""import 'package:angular/angular.dart';
 
 @Directive(selector: '$elementName')
 class $className {
@@ -116,7 +114,7 @@ void generateAngularPipe(String pipeName) {
   String className = camelToPascalCase(filename);
 
   // NOTE: Use replaceAll() to insert core.dart to avoid transformer errros
-  dartFileBuffer.write("""import 'package:angular2/angular2.dart';
+  dartFileBuffer.write("""import 'package:angular/angular.dart';
 
 @Pipe(name: '$pipeName')
 class $className implements PipeTransform {
@@ -126,53 +124,6 @@ class $className implements PipeTransform {
 }""".replaceAll('angular2.dart', 'core.dart'));
 
   outputFile(filename, "dart", dartFileBuffer);
-}
-
-void generatePolymerElement(String elementName) {
-  if (!isSpinalCase(elementName)) {
-    error("Error: Element names should be provided using spinal case (dash separators).");
-    return;
-  }
-
-  StringBuffer htmlFileBuffer = new StringBuffer();
-  StringBuffer dartFileBuffer = new StringBuffer();
-
-  String filename = spinalToSnakeCase(elementName);
-  String className = spinalToPascalCase(elementName);
-
-  htmlFileBuffer.write("""<dom-module id="$elementName">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-
-  </template>
-</dom-module>""");
-
-  dartFileBuffer.write("""@HtmlImport('$filename.html')
-library my_project.lib.$filename;
-
-import 'dart:html';
-
-import 'package:polymer_elements/iron_flex_layout/classes/iron_flex_layout.dart';
-import 'package:polymer/polymer.dart';
-import 'package:web_components/web_components.dart' show HtmlImport;
-
-import '../../services/logger.dart';
-
-@PolymerRegister('$elementName')
-class $className extends PolymerElement {
-
-  $className.created() : super.created();
-
-  void ready() {
-    log.info("\$runtimeType::ready()");
-  }
-}""");
-
-  outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer);
 }
 
 void outputDirectoryDartHTML(String filename, StringBuffer htmlFileBuffer, StringBuffer dartFileBuffer) {
