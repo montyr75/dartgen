@@ -1,15 +1,16 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:args/args.dart';
 import 'package:dartgen/src/identifier.dart';
 
 // output types
-const String ANGULAR_COMPONENT = "ng2-cmp";      // default output type
-const String ANGULAR_DIRECTIVE = "ng2-dir";
-const String ANGULAR_PIPE = "ng2-pipe";
+const String ANGULAR_COMPONENT = "ng-cmp";      // default output type
+const String ANGULAR_DIRECTIVE = "ng-dir";
+const String ANGULAR_PIPE = "ng-pipe";
+const String BLOC = "bloc";
 
 const String DEFAULT_ELEMENT_NAME = "custom-element";
-
-ArgResults argResults;
 
 void main(List<String> arguments) {
   // set up argument parser
@@ -19,7 +20,7 @@ void main(List<String> arguments) {
     ..addFlag('help', abbr: 'h', negatable: false, help: "Displays this help information.");
 
   // parse the command-line arguments
-  argResults = argParser.parse(arguments);
+  ArgResults argResults = argParser.parse(arguments);
 
   if (argResults['help']) {
     stdout.writeln("""
@@ -33,6 +34,7 @@ ${argParser.usage}
       case ANGULAR_COMPONENT: generateAngularComponent(argResults['name']); break;
       case ANGULAR_DIRECTIVE: generateAngularDirective(argResults['name']); break;
       case ANGULAR_PIPE: generateAngularPipe(argResults['name']); break;
+      case BLOC: generateBloc(argResults['name']); break;
       default: error("Unrecognized output type: ${argResults['o']}"); break;
     }
   }
@@ -49,12 +51,12 @@ void generateAngularComponent(String elementName) {
     return;
   }
 
-  StringBuffer htmlFileBuffer = new StringBuffer();
-  StringBuffer dartFileBuffer = new StringBuffer();
-  StringBuffer cssFileBuffer = new StringBuffer();
+  final htmlFileBuffer = new StringBuffer();
+  final dartFileBuffer = new StringBuffer();
+  final cssFileBuffer = new StringBuffer();
 
-  String filename = spinalToSnakeCase(elementName);
-  String className = spinalToPascalCase(elementName);
+  final filename = spinalToSnakeCase(elementName);
+  final className = spinalToPascalCase(elementName);
 
   htmlFileBuffer.write("""<div></div>""");
 
@@ -79,7 +81,11 @@ class $className {
   
 }""");
 
-  outputDirectoryDartHTML(filename, htmlFileBuffer, dartFileBuffer, cssFileBuffer);
+  writeFiles([
+    OutputFile(filename, "html", htmlFileBuffer),
+    OutputFile(filename, "css", cssFileBuffer),
+    OutputFile(filename, "dart", dartFileBuffer)
+  ], dir: filename);
 }
 
 void generateAngularDirective(String className) {
@@ -88,10 +94,10 @@ void generateAngularDirective(String className) {
     return;
   }
 
-  StringBuffer dartFileBuffer = new StringBuffer();
+  final dartFileBuffer = new StringBuffer();
 
-  String filename = pascalToSnakeCase(className);
-  String elementName = snakeToSpinalCase(filename);
+  final filename = pascalToSnakeCase(className);
+  final elementName = snakeToSpinalCase(filename);
 
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
@@ -100,7 +106,7 @@ class $className {
 
 }""");
 
-  outputFile(filename, "dart", dartFileBuffer);
+  writeFiles([OutputFile(filename, "dart", dartFileBuffer)]);
 }
 
 void generateAngularPipe(String pipeName) {
@@ -109,10 +115,10 @@ void generateAngularPipe(String pipeName) {
     return;
   }
 
-  StringBuffer dartFileBuffer = new StringBuffer();
+  final dartFileBuffer = new StringBuffer();
 
-  String filename = camelToSnakeCase(pipeName);
-  String className = camelToPascalCase(filename);
+  final filename = camelToSnakeCase(pipeName);
+  final className = camelToPascalCase(filename);
 
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
@@ -123,23 +129,94 @@ class $className implements PipeTransform {
   }
 }""");
 
-  outputFile(filename, "dart", dartFileBuffer);
+  writeFiles([OutputFile(filename, "dart", dartFileBuffer)]);
 }
 
-void outputDirectoryDartHTML(String filename, StringBuffer htmlFileBuffer, StringBuffer dartFileBuffer, StringBuffer cssFileBuffer) {
-  new Directory("$filename").create().then((Directory directory) {
-    outputFile(filename, "html", htmlFileBuffer, inDir: filename);
-    outputFile(filename, "dart", dartFileBuffer, inDir: filename);
-    outputFile(filename, "css", cssFileBuffer, inDir: filename);
-  });
+void generateBloc(String blocName) {
+  if (!isPascalCase(blocName)) {
+    error("Error: BLoC names should be provided using Pascal case (upper camel case).");
+    return;
+  }
+
+  final blocFileBuffer = new StringBuffer();
+  final stateFileBuffer = new StringBuffer();
+  final eventsFileBuffer = new StringBuffer();
+  final exportsFileBuffer = new StringBuffer();
+
+  final filename = pascalToSnakeCase(blocName);
+  final blocClassName = "${blocName}Bloc";
+  final stateClassName = "${blocName}State";
+  final eventClassName = "${blocName}Event";
+
+  blocFileBuffer.write("""import 'package:bloc/bloc.dart';
+
+import '${filename}_state.dart';
+import '${filename}_events.dart';
+import '../../managers/logger_manager.dart';
+
+class $blocClassName extends Bloc<$eventClassName, $stateClassName> {
+  @override
+  $stateClassName get initialState => $stateClassName.initial();
+
+  final LoggerManager _log;
+
+  $blocClassName(this._log) {
+    _log.info("\$runtimeType()");
+  }
+
+  @override
+  Stream<$stateClassName> mapEventToState($stateClassName state, $eventClassName event) async* {
+
+  }
+}""");
+
+  stateFileBuffer.write("""class $stateClassName {
+  final bool isLoading;
+
+  const $stateClassName({this.isLoading = false});
+
+  factory $stateClassName.initial() => $stateClassName();
+}""");
+
+  eventsFileBuffer.write("abstract class $eventClassName {}");
+
+  exportsFileBuffer.write("""library blocs.$filename;
+  
+export '${filename}_bloc.dart';
+export '${filename}_events.dart';
+export '${filename}_state.dart';
+""");
+
+  writeFiles([
+    OutputFile("${filename}_bloc", "dart", blocFileBuffer),
+    OutputFile("${filename}_state", "dart", stateFileBuffer),
+    OutputFile("${filename}_events", "dart", eventsFileBuffer),
+    OutputFile(filename, "dart", exportsFileBuffer)
+  ], dir: filename);
 }
 
-void outputFile(String filename, String extension, StringBuffer content, {String inDir}) {
-  String filePath = "${inDir != null ? '$inDir/' : ''}$filename.$extension";
+Future<void> writeFiles(List<OutputFile> files, {String dir}) async {
+  if (dir != null) {
+    await Directory(dir).create();
+  }
 
-  new File("$filePath").writeAsString(content.toString())
-      .then((_) => stdout.writeln("$filePath created."))
-      .catchError(() {
-    error("Error writing .$extension file.");
-  });
+  for (OutputFile f in files) {
+    final path = "${dir != null ? '$dir/' : ''}${f.name}.${f.extension}";
+
+    try {
+      await File(path).writeAsString(f.content.toString());
+      stdout.writeln("$path created.");
+    }
+    catch (e) {
+      error("Error writing .${f.extension} file.");
+    }
+  }
+}
+
+class OutputFile {
+  final String name;
+  final String extension;
+  final StringBuffer content;
+
+  const OutputFile(this.name, this.extension, this.content);
 }
