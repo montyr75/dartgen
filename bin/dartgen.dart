@@ -62,7 +62,7 @@ void generateAngularComponent(String elementName) {
 
   dartFileBuffer.write("""import 'package:angular/angular.dart';
 
-import 'package:client_shared/managers.dart';
+import '../../managers/logger_manager.dart';
 
 @Component(selector: '$elementName',
     templateUrl: '$filename.html',
@@ -165,7 +165,7 @@ class $blocClassName extends Bloc<$eventClassName, $stateClassName> {
   }
 
   @override
-  Stream<$stateClassName> mapEventToState($stateClassName state, $eventClassName event) async* {
+  Stream<$stateClassName> mapEventToState($eventClassName event) async* {
 
   }
 }""");

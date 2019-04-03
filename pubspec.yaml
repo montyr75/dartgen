@@ -1,6 +1,6 @@
 name: dartgen
 description: A command-line application to generate Dart code files.
-version: 0.0.9
+version: 0.0.10
 
 environment:
   sdk: '>=2.0.0 <3.0.0'
