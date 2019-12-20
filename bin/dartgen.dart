@@ -150,18 +150,16 @@ void generateBloc(String blocName) {
 
   blocFileBuffer.write("""import 'package:bloc/bloc.dart';
 
+import '../../app_config.dart' show log;
 import '${filename}_state.dart';
 import '${filename}_events.dart';
-import '../../managers/logger_manager.dart';
 
 class $blocClassName extends Bloc<$eventClassName, $stateClassName> {
   @override
   $stateClassName get initialState => $stateClassName.initial();
 
-  final LoggerManager _log;
-
-  $blocClassName(this._log) {
-    _log.info("\$runtimeType()");
+  $blocClassName() {
+    log.info("\$runtimeType()");
   }
 
   @override
