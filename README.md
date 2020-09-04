@@ -2,7 +2,7 @@
 A command-line application to generate Dart code files.
 
 ## Install
-Use the [pub global](https://www.dartlang.org/tools/pub/cmd/pub-global.html) command to install this into your system. You must already have the [Dart SDK](https://www.dartlang.org/downloads/) downloaded and included in your system path.
+Use the [pub global](https://www.dartlang.org/tools/pub/cmd/pub-global.html) command to install this into your system. You must already have the [Dart SDK](https://dart.dev/get-dart) downloaded and included in your system path.
 
     pub global activate --source git https://github.com/montyr75/dartgen/
 
@@ -11,14 +11,11 @@ Use the [pub global](https://www.dartlang.org/tools/pub/cmd/pub-global.html) com
 
 ## Use
 
-### Angular
+### Cubit
 
-For Angular component (default) boilerplate, creates a directory and inserts HTML, CSS, and Dart files. Other types do not create a directory.
+For Cubit (default) boilerplate, creates a directory and inserts files for the Cubit itself, state, and an exports file.
 
-    dartgen -n my-angular-component
-    dartgen -o ng-cmp -n my-angular-component
-    dartgen -o ng-dir -n MyAngularDirective
-    dartgen -o ng-pipe -n myAngularPipe
+    dartgen -n MyAuth
 
 ### BLoC
 Creates a directory and inserts files for the BLoC itself, events, state, and an exports file.
