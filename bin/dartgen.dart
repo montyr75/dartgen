@@ -5,18 +5,16 @@ import 'package:args/args.dart';
 import 'package:dartgen/src/identifier.dart';
 
 // output types
-const String ANGULAR_COMPONENT = "ng-cmp";      // default output type
-const String ANGULAR_DIRECTIVE = "ng-dir";
-const String ANGULAR_PIPE = "ng-pipe";
-const String BLOC = "bloc";
+const String cubit = "cubit";      // default output type
+const String bloc = "bloc";
 
-const String DEFAULT_ELEMENT_NAME = "custom-element";
+const defaultName = 'Unnamed';
 
 void main(List<String> arguments) {
   // set up argument parser
   final ArgParser argParser = new ArgParser()
-    ..addOption('output', abbr: 'o', defaultsTo: ANGULAR_COMPONENT, help: "Type of boilerplate to generate and output.")
-    ..addOption('name', abbr: 'n', defaultsTo: DEFAULT_ELEMENT_NAME, help: "Name of element, class, etc.")
+    ..addOption('output', abbr: 'o', defaultsTo: cubit, help: "Type of boilerplate to generate and output.")
+    ..addOption('name', abbr: 'n', defaultsTo: defaultName, help: "Name of element, class, etc.")
     ..addFlag('help', abbr: 'h', negatable: false, help: "Displays this help information.");
 
   // parse the command-line arguments
@@ -31,10 +29,8 @@ ${argParser.usage}
   }
   else {
     switch (argResults['output']) {
-      case ANGULAR_COMPONENT: generateAngularComponent(argResults['name']); break;
-      case ANGULAR_DIRECTIVE: generateAngularDirective(argResults['name']); break;
-      case ANGULAR_PIPE: generateAngularPipe(argResults['name']); break;
-      case BLOC: generateBloc(argResults['name']); break;
+      case cubit: generateCubit(argResults['name']); break;
+      case bloc: generateBloc(argResults['name']); break;
       default: error("Unrecognized output type: ${argResults['o']}"); break;
     }
   }
@@ -45,95 +41,57 @@ void error(String errorMsg) {
   exitCode = 2;
 }
 
-void generateAngularComponent(String elementName) {
-  if (!isSpinalCase(elementName)) {
-    error("Error: Component names should be provided using spinal case (dash separators).");
+void generateCubit(String name) {
+  if (!isPascalCase(name)) {
+    error("Error: Cubit names should be provided using Pascal case (upper camel case).");
     return;
   }
 
-  final htmlFileBuffer = new StringBuffer();
-  final dartFileBuffer = new StringBuffer();
-  final cssFileBuffer = new StringBuffer();
+  final blocFileBuffer = new StringBuffer();
+  final stateFileBuffer = new StringBuffer();
+  final exportsFileBuffer = new StringBuffer();
 
-  final filename = spinalToSnakeCase(elementName);
-  final className = spinalToPascalCase(elementName);
+  final filename = pascalToSnakeCase(name);
+  final blocClassName = "${name}Bloc";
+  final stateClassName = "${name}State";
 
-  htmlFileBuffer.write("""<div></div>""");
+  blocFileBuffer.write("""import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
 
-  dartFileBuffer.write("""import 'package:angular/angular.dart';
+import '../../app_config.dart' show log;
+import '${filename}_state.dart';
 
-import '../../managers/logger_manager.dart';
-
-@Component(selector: '$elementName',
-    templateUrl: '$filename.html',
-    styleUrls: ['$filename.css'],
-    directives: []
-)
-class $className {
-  final LoggerManager _log;
-
-  $className(this._log) {
-    _log.info("\$runtimeType()");
+class $blocClassName extends Cubit<$stateClassName> {
+  $blocClassName() : super(const $stateClassName()) {
+    log.info("\$runtimeType()");
   }
 }""");
 
-  cssFileBuffer.write(""":host {
-  
+  stateFileBuffer.write("""class $stateClassName {
+  final bool isLoading;
+
+  const $stateClassName({this.isLoading = false});
+
+  $stateClassName.copyWith({bool isLoading}) {
+    return $stateClassName(
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }""");
 
+  exportsFileBuffer.write("""export '${filename}_bloc.dart';
+export '${filename}_state.dart';
+""");
+
   writeFiles([
-    OutputFile(filename, "html", htmlFileBuffer),
-    OutputFile(filename, "css", cssFileBuffer),
-    OutputFile(filename, "dart", dartFileBuffer)
+    OutputFile("${filename}_bloc", "dart", blocFileBuffer),
+    OutputFile("${filename}_state", "dart", stateFileBuffer),
+    OutputFile(filename, "dart", exportsFileBuffer)
   ], dir: filename);
 }
 
-void generateAngularDirective(String className) {
-  if (!isPascalCase(className)) {
-    error("Error: Directive class names should be provided using Pascal case (upper camel case).");
-    return;
-  }
-
-  final dartFileBuffer = new StringBuffer();
-
-  final filename = pascalToSnakeCase(className);
-  final elementName = snakeToSpinalCase(filename);
-
-  dartFileBuffer.write("""import 'package:angular/angular.dart';
-
-@Directive(selector: '$elementName')
-class $className {
-
-}""");
-
-  writeFiles([OutputFile(filename, "dart", dartFileBuffer)]);
-}
-
-void generateAngularPipe(String pipeName) {
-  if (!isCamelCase(pipeName)) {
-    error("Error: Pipe names should be provided using camel case.");
-    return;
-  }
-
-  final dartFileBuffer = new StringBuffer();
-
-  final filename = camelToSnakeCase(pipeName);
-  final className = camelToPascalCase(filename);
-
-  dartFileBuffer.write("""import 'package:angular/angular.dart';
-
-@Pipe(name: '$pipeName')
-class $className implements PipeTransform {
-  String transform(val, [List args]) {
-    return "";
-  }
-}""");
-
-  writeFiles([OutputFile(filename, "dart", dartFileBuffer)]);
-}
-
-void generateBloc(String blocName) {
-  if (!isPascalCase(blocName)) {
+void generateBloc(String name) {
+  if (!isPascalCase(name)) {
     error("Error: BLoC names should be provided using Pascal case (upper camel case).");
     return;
   }
@@ -143,21 +101,19 @@ void generateBloc(String blocName) {
   final eventsFileBuffer = new StringBuffer();
   final exportsFileBuffer = new StringBuffer();
 
-  final filename = pascalToSnakeCase(blocName);
-  final blocClassName = "${blocName}Bloc";
-  final stateClassName = "${blocName}State";
-  final eventClassName = "${blocName}Event";
+  final filename = pascalToSnakeCase(name);
+  final blocClassName = "${name}Bloc";
+  final stateClassName = "${name}State";
+  final eventClassName = "${name}Event";
 
   blocFileBuffer.write("""import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
 
 import '../../app_config.dart' show log;
 import '${filename}_state.dart';
 import '${filename}_events.dart';
 
 class $blocClassName extends Bloc<$eventClassName, $stateClassName> {
-  @override
-  $stateClassName get initialState => $stateClassName.initial();
-
   $blocClassName() {
     log.info("\$runtimeType()");
   }
@@ -173,14 +129,16 @@ class $blocClassName extends Bloc<$eventClassName, $stateClassName> {
 
   const $stateClassName({this.isLoading = false});
 
-  factory $stateClassName.initial() => $stateClassName();
+  $stateClassName.copyWith({bool isLoading}) {
+    return $stateClassName(
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }""");
 
   eventsFileBuffer.write("abstract class $eventClassName {}");
 
-  exportsFileBuffer.write("""library blocs.$filename;
-  
-export '${filename}_bloc.dart';
+  exportsFileBuffer.write("""export '${filename}_bloc.dart';
 export '${filename}_events.dart';
 export '${filename}_state.dart';
 """);
