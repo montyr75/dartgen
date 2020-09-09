@@ -72,7 +72,7 @@ class $blocClassName extends Cubit<$stateClassName> {
 
   const $stateClassName({this.isLoading = false});
 
-  $stateClassName copyWith(bool isLoading}) {
+  $stateClassName copyWith({bool isLoading}) {
     return $stateClassName(
       isLoading: isLoading ?? this.isLoading,
     );
@@ -129,8 +129,8 @@ class $blocClassName extends Bloc<$eventClassName, $stateClassName> {
 
   const $stateClassName({this.isLoading = false});
 
-  $stateClassName copyWith(bool isLoading}) {
-    return $stateClassName({
+  $stateClassName copyWith({bool isLoading}) {
+    return $stateClassName(
       isLoading: isLoading ?? this.isLoading,
     );
   }
